@@ -1,5 +1,5 @@
 set mode quit alldone
-set $dir=/home/bvangoor/EXT4_FS
+set $dir=/home/ssiva/EXT4_FS
 #Fixing I/O amount to be 4M files
 set $nfiles=4000000
 set $meandirwidth=1000

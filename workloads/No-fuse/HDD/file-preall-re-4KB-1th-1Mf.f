@@ -1,5 +1,5 @@
 set mode quit alldone
-set $dir=/home/bvangoor/EXT4_FS
+set $dir=/home/ssiva/EXT4_FS
 #Fix the No. of files to 1M prealloc (0.3 M run)
 set $nfiles=1000000
 set $meandirwidth=1000
@@ -21,9 +21,9 @@ define process name=fileopen, instances=1
 create files
 #mounting and unmounting for better stable results
 system "sync"
-system "umount /home/bvangoor/EXT4_FS/"
+system "umount /home/ssiva/EXT4_FS/"
 #change accordingly for HDD(sdb) and SSD(sdd)
-system "mount -t ext4 /dev/sdb /home/bvangoor/EXT4_FS"
+system "mount -t ext4 /dev/sdb /home/ssiva/EXT4_FS"
 system "sync"
 system "echo 3 > /proc/sys/vm/drop_caches"
 system "echo started >> cpustats.txt"

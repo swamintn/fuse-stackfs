@@ -1,5 +1,5 @@
 set mode quit alldone
-set $dir=/home/bvangoor/EXT4_FS
+set $dir=/home/ssiva/EXT4_FS
 set $nfiles=1
 set $meandirwidth=1
 set $nthreads=1
@@ -19,9 +19,9 @@ define process name=fileopen, instances=1
 create files
 #unmount and mount for better stability results
 system "sync"
-system "umount /home/bvangoor/EXT4_FS"
+system "umount /home/ssiva/EXT4_FS"
 #Change according for HDD(sdb) and SSD(sdd)
-system "mount -t ext4 /dev/sdb /home/bvangoor/EXT4_FS"
+system "mount -t ext4 /dev/sdb /home/ssiva/EXT4_FS"
 system "sync"
 system "echo 3 > /proc/sys/vm/drop_caches"
 system "echo started >> cpustats.txt"

@@ -1,5 +1,5 @@
 set mode quit alldone
-set $dir=/home/bvangoor/EXT4_FS
+set $dir=/home/ssiva/EXT4_FS
 set $nfiles=200000
 set $meandirwidth=20
 set $nthreads=50
@@ -31,9 +31,9 @@ create files
 #unmount and mount for better stability results
 system "sync"
 
-system "umount /home/bvangoor/EXT4_FS"
+system "umount /home/ssiva/EXT4_FS"
 #change accordingly for HDD (sdb) and SSD(sdd)
-system "mount -t ext4 /dev/sdd /home/bvangoor/EXT4_FS"
+system "mount -t ext4 /dev/sdd /home/ssiva/EXT4_FS"
 
 system "sync"
 system "echo 3 > /proc/sys/vm/drop_caches"

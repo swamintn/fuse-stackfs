@@ -1,5 +1,5 @@
 set mode quit alldone
-set $dir=/home/bvangoor/EXT4_FS
+set $dir=/home/ssiva/EXT4_FS
 set $nfiles=1
 set $nthreads=1
 #Fix I/O amount to 24 G (HDD)
@@ -22,13 +22,13 @@ define process name=fileopen, instances=1
 create files
 #mounting and unmounting for better stable results
 system "sync"
-system "umount /home/bvangoor/EXT4_FS/"
+system "umount /home/ssiva/EXT4_FS/"
 #Change accordingly for HDD(sdb) and SSD(sdd)
-system "mount -t ext4 /dev/sdb /home/bvangoor/EXT4_FS"
+system "mount -t ext4 /dev/sdb /home/ssiva/EXT4_FS"
 #warm up the cache (RAM)
 system "sync"
 system "echo 3 > /proc/sys/vm/drop_caches"
-system "dd if=/home/bvangoor/EXT4_FS/bigfileset/00000001/00000001 of=/dev/null bs=4096 count=1048576 &> /dev/null"
+system "dd if=/home/ssiva/EXT4_FS/bigfileset/00000001/00000001 of=/dev/null bs=4096 count=1048576 &> /dev/null"
 
 system "echo started >> cpustats.txt"
 system "echo started >> diskstats.txt"

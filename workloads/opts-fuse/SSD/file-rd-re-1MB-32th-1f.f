@@ -1,5 +1,5 @@
 set mode quit alldone
-set $dir=/home/bvangoor/COM_DIR/FUSE_EXT4_FS/
+set $dir=/home/ssiva/COM_DIR/FUSE_EXT4_FS/
 set $nfiles=1
 set $nthreads=32
 #Fixing I/O Amount to 60 G
@@ -20,26 +20,26 @@ define process name=fileopen, instances=1
 }
 
 #prealloc the file on EXT4 F/S (save the time)
-system "mkdir -p /home/bvangoor/COM_DIR/FUSE_EXT4_FS"
-system "mkdir -p /home/bvangoor/COM_DIR/EXT4_FS"
+system "mkdir -p /home/ssiva/COM_DIR/FUSE_EXT4_FS"
+system "mkdir -p /home/ssiva/COM_DIR/EXT4_FS"
 create files
 
 #Move everything created under FUSE-EXT4 dir to EXT4
-system "mv /home/bvangoor/COM_DIR/FUSE_EXT4_FS/* /home/bvangoor/COM_DIR/EXT4_FS/"
+system "mv /home/ssiva/COM_DIR/FUSE_EXT4_FS/* /home/ssiva/COM_DIR/EXT4_FS/"
 
 #mounting and unmounting for better stable results
 system "sync"
-system "umount /home/bvangoor/COM_DIR/"
+system "umount /home/ssiva/COM_DIR/"
 #change accordingly for HDD(sdb) and SSD(sdd)
-system "mount -t ext4 /dev/sdd /home/bvangoor/COM_DIR/"
+system "mount -t ext4 /dev/sdd /home/ssiva/COM_DIR/"
 
 #mount FUSE FS (default) on top of EXT4
-system "/home/bvangoor/fuse-playground/StackFS_LowLevel/StackFS_ll --statsdir=/tmp/ -o max_write=131072 -o writeback_cache -o splice_read -o splice_write -o splice_move -r /home/bvangoor/COM_DIR/EXT4_FS/ /home/bvangoor/COM_DIR/FUSE_EXT4_FS/ > /dev/null &"
+system "/home/ssiva/fuse-playground/StackFS_LowLevel/StackFS_ll --statsdir=/tmp/ -o max_write=131072 -o writeback_cache -o splice_read -o splice_write -o splice_move -r /home/ssiva/COM_DIR/EXT4_FS/ /home/ssiva/COM_DIR/FUSE_EXT4_FS/ > /dev/null &"
 
 #warm up the cache (RAM)
 system "sync"
 system "echo 3 > /proc/sys/vm/drop_caches"
-system "dd if=/home/bvangoor/EXT4_FS/bigfileset/00000001/00000001 of=/dev/null bs=4096 count=1048576 &> /dev/null"
+system "dd if=/home/ssiva/EXT4_FS/bigfileset/00000001/00000001 of=/dev/null bs=4096 count=1048576 &> /dev/null"
 system "echo started >> cpustats.txt"
 system "echo started >> diskstats.txt"
 psrun -10
