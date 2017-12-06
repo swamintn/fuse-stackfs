@@ -26,7 +26,7 @@
 
 FILE *logfile;
 #define TESTING_XATTR 0
-#define USE_SPLICE 0
+#define USE_SPLICE 1
 
 #define TRACE_FILE "/trace_stackfs.log"
 #define TRACE_FILE_LEN 18
@@ -265,9 +265,9 @@ static char *lo_name(fuse_req_t req, fuse_ino_t ino)
 }
 
 /* This is what given to the kernel FUSE F/S */
-static ino_t get_lower_fuse_inode_no(fuse_req_t req, fuse_ino_t ino) {
-	return lo_inode(req, ino)->lo_ino;
-}
+//static ino_t get_lower_fuse_inode_no(fuse_req_t req, fuse_ino_t ino) {
+//	return lo_inode(req, ino)->lo_ino;
+//}
 
 /* This is what given to the user FUSE F/S */
 //static ino_t get_higher_fuse_inode_no(fuse_req_t req, fuse_ino_t ino) {
@@ -874,12 +874,14 @@ static void stackfs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 	//long time;
 	//long time_sec;
 
-	StackFS_trace("StackFS Read start on inode : %llu", get_lower_fuse_inode_no(req, ino));
+	//StackFS_trace("StackFS Read start on inode : %llu", get_lower_fuse_inode_no(req, ino));
 	if (USE_SPLICE) {
 		struct fuse_bufvec buf = FUSE_BUFVEC_INIT(size);
 
-		//StackFS_trace("Splice Read name : %s, off : %lu, size : %zu",
-		//			lo_name(req, ino), offset, size);
+		StackFS_trace("Splice Read name : %s, off : %lu, size : %zu",
+					lo_name(req, ino), offset, size);
+		printf("++++++++++ SPLICE: Splice Read name : %s, off : %lu, size : %zu ++++++++++++++++++\n",
+					lo_name(req, ino), offset, size);
 
 		generate_start_time(req);
 		buf.buf[0].flags = FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK;
@@ -887,12 +889,17 @@ static void stackfs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 		buf.buf[0].pos = offset;
 		generate_end_time(req);
 		populate_time(req);
+		//printf("**************** SPLICE MOVE IS BEING DONE ******************\n");
+		printf("+++++++++++ SPLICE: Splice Read ++++++++++++++++++\n");
 		fuse_reply_data(req, &buf, FUSE_BUF_SPLICE_MOVE);
 	} else {
 		char *buf;
 
-		//StackFS_trace("Read on name : %s, Kernel inode : %llu, fuse inode : %llu, off : %lu, size : %zu",
+		//StackFS_trace("Non-splice Read on name : %s, Kernel inode : %llu, fuse inode : %llu, off : %lu, size : %zu",
 		//			lo_name(req, ino), get_lower_fuse_inode_no(req, ino), get_higher_fuse_inode_no(req, ino), offset, size);
+		printf("++++++++++ NON-SPLICE: Read on name : %s, off : %lu, size : %zu ++++++++++++++\n",
+					lo_name(req, ino), offset, size);
+		
 		buf = (char *)malloc(size);
 		generate_start_time(req);
 		//clock_gettime(CLOCK_MONOTONIC, &start);
@@ -910,7 +917,7 @@ static void stackfs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
 		res = fuse_reply_buf(req, buf, res);
 		free(buf);
 	}
-	StackFS_trace("StackFS Read end on inode : %llu", get_lower_fuse_inode_no(req, ino));
+	//StackFS_trace("StackFS Read end on inode : %llu", get_lower_fuse_inode_no(req, ino));
 }
 
 static void stackfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
@@ -1028,13 +1035,26 @@ static void stackfs_ll_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
 {
 	int res;
 	(void) ino;
+	//struct timespec start, finish;
+	//long non_splice_timer;
 
 	//StackFS_trace("Write name : %s, inode : %llu, off : %lu, size : %zu",
 	//		lo_name(req, ino), lo_inode(req, ino)->ino, off, size);
+	printf("+++++++++++++++ NON-SPLICE: Write name : %s, off : %lu, size : %zu +++++++++++++\n",
+			lo_name(req, ino), off, size);
 	generate_start_time(req);
+
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+
 	res = pwrite(fi->fh, buf, size, off);
+
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
+
 	generate_end_time(req);
 	populate_time(req);
+
+	//non_splice_timer = (finish.tv_sec * 1000000000 + finish.tv_nsec) - (start.tv_sec * 1000000000 + start.tv_nsec);
+	//printf("++++++++++++++ NON-SPLICE: Time for operation is %ld ++++++++++++++\n", non_splice_timer);
 
 	if (res == -1)
 		return (void) fuse_reply_err(req, errno);
@@ -1048,23 +1068,40 @@ static void stackfs_ll_write_buf(fuse_req_t req, fuse_ino_t ino,
 {
 	int res;
 	(void) ino;
+	//struct timespec start, finish;
+	//long splice_timer;
 
 	struct fuse_bufvec dst = FUSE_BUFVEC_INIT(fuse_buf_size(buf));
 
-	//StackFS_trace("Splice Write_buf on name : %s, off : %lu, size : %zu",
-	//			lo_name(req, ino), off, buf->buf[0].size);
+	StackFS_trace("Splice Write_buf on name : %s, off : %lu, size : %zu",
+				lo_name(req, ino), off, buf->buf[0].size);
 
 	generate_start_time(req);
+
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+
 	dst.buf[0].flags = FUSE_BUF_IS_FD | FUSE_BUF_FD_SEEK;
 	dst.buf[0].fd = fi->fh;
 	dst.buf[0].pos = off;
 	res = fuse_buf_copy(&dst, buf, FUSE_BUF_SPLICE_NONBLOCK);
+
+	//clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &finish);
+
 	generate_end_time(req);
 	populate_time(req);
-	if (res >= 0)
+
+	//splice_timer = (finish.tv_sec * 1000000000 + finish.tv_nsec) - (start.tv_sec * 1000000000 + start.tv_nsec);
+	//printf("++++++++++++++ SPLICE: Time for operation is %ld ++++++++++++++\n", splice_timer);
+
+	if (res >= 0) {
+		StackFS_trace("Splice Write_buf on specified name passed with written bytes =  %u\n", res);
+		printf("+++++++++++ SPLICE: Splice Write_buf on specified name passed with written bytes =  %u ++++++++++++++++++\n", res);
 		fuse_reply_write(req, res);
-	else
+	} else {
+		StackFS_trace("Splice Write_buf on specified name failed with error %u\n", res);
+		printf("+++++++++++ SPLICE: Splice Write_buf on specified name failed with error =  %u ++++++++++++++++++\n", res);
 		fuse_reply_err(req, res);
+	}
 }
 #endif
 
@@ -1446,7 +1483,7 @@ int main(int argc, char **argv)
 				}
 				fuse_session_destroy(se);
 			}
-			StackFS_trace("Function Trace : Unmount");
+			//StackFS_trace("Function Trace : Unmount");
 			fuse_unmount(mountpoint, ch);
 		}
 	}
